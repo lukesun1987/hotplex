@@ -54,13 +54,13 @@ type GatewayDeps struct {
 	CronScheduler  *cron.Scheduler
 }
 
-const defaultConfigPath = "~/.hotplex/config.yaml"
+const defaultConfigPath = config.DefaultConfigPath
 
 func configFlag(cmd *cobra.Command, target *string) {
 	cmd.Flags().StringVarP(target, "config", "c", defaultConfigPath, "config file path")
 }
 
-func runGateway(configPath string, devMode bool, stopCh <-chan struct{}) (err error) {
+func runGateway(configPath string, devMode bool, stopCh <-chan struct{}) (err error) { //nolint:unparam // stopCh used by Windows service wrapper
 	defer func() {
 		if err != nil {
 			removeGatewayState()
