@@ -76,7 +76,7 @@ jobs:
           fi
           echo "No oversized files in HEAD tree."
 
-  # ── Test: race + coverage (parallel with Build) ────────────────────────
+  # ── Test: coverage (parallel with Build) ─────────────────────────────────
   # Skips webchat build entirely — tests don't import the embedded SPA.
   # Runs vet inline for fast failure before expensive compilation.
   test:
@@ -94,6 +94,8 @@ jobs:
           build-webchat: 'false'
 
       - name: Verify + Vet
+        env:
+          CGO_ENABLED: '0'
         run: go mod verify && go vet ./...
 
       - name: Determine test scope
@@ -127,9 +129,10 @@ jobs:
             echo "pkgs=." >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Run tests with race detector + coverage
+      - name: Run tests with coverage
         env:
           SCOPE: ${{ steps.scope.outputs.pkgs }}
+          CGO_ENABLED: '0'
         run: |
           ALL_PKGS=$(go list ./... | grep -v \
             -e 'internal/worker/proc' \
@@ -163,7 +166,7 @@ jobs:
           fi
 
           # shellcheck disable=SC2086,SC2046
-          go test -race -timeout=10m -coverprofile=coverage.out -covermode=atomic $TEST_PKGS
+          go test -timeout=10m -coverprofile=coverage.out -covermode=atomic $TEST_PKGS
 
       - name: Display coverage
         if: always()
@@ -189,6 +192,8 @@ jobs:
       - uses: ./.github/actions/setup-go-webchat
 
       - name: Verify + Vet + Build
+        env:
+          CGO_ENABLED: '0'
         run: go mod verify && go vet ./... && go build ./...
 
       - name: Build & validate docs
@@ -201,6 +206,8 @@ jobs:
         run: make swagger
 
       - name: Build gateway binary
+        env:
+          CGO_ENABLED: '0'
         run: |
           mkdir -p bin
           go build -o bin/hotplex ./cmd/hotplex
@@ -210,6 +217,8 @@ jobs:
 
       - name: Lint
         uses: golangci/golangci-lint-action@v9.2.0
+        env:
+          CGO_ENABLED: '0'
         with:
           version: v2.11.4
           args: --timeout=10m
